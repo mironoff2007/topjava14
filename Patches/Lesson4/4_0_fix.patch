@@ -1,0 +1,144 @@
+Index: src/main/java/ru/javawebinar/topjava/service/MealServiceImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/service/MealServiceImpl.java	(date 1531862494000)
++++ src/main/java/ru/javawebinar/topjava/service/MealServiceImpl.java	(date 1531863073210)
+@@ -41,8 +41,8 @@
+     }
+ 
+     @Override
+-    public Meal update(Meal meal, int userId) {
+-        return checkNotFoundWithId(repository.save(meal, userId), meal.getId());
++    public void update(Meal meal, int userId) {
++        checkNotFoundWithId(repository.save(meal, userId), meal.getId());
+     }
+ 
+     @Override
+Index: src/test/java/ru/javawebinar/topjava/web/InMemoryAdminRestControllerTest.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/ru/javawebinar/topjava/web/InMemoryAdminRestControllerTest.java	(date 1531862494000)
++++ src/test/java/ru/javawebinar/topjava/web/InMemoryAdminRestControllerTest.java	(date 1531863030005)
+@@ -38,7 +38,7 @@
+     }
+ 
+     @Test
+-    public void testDelete() throws Exception {
++    public void delete() throws Exception {
+         controller.delete(UserTestData.USER_ID);
+         Collection<User> users = controller.getAll();
+         Assert.assertEquals(users.size(), 1);
+@@ -46,7 +46,7 @@
+     }
+ 
+     @Test(expected = NotFoundException.class)
+-    public void testDeleteNotFound() throws Exception {
++    public void deleteNotFound() throws Exception {
+         controller.delete(10);
+     }
+ }
+\ No newline at end of file
+Index: src/main/resources/spring/spring-db.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/resources/spring/spring-db.xml	(date 1531862494000)
++++ src/main/resources/spring/spring-db.xml	(date 1531863030003)
+@@ -20,6 +20,6 @@
+     </bean>
+ 
+     <bean id="namedJdbcTemplate" class="org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate">
+-        <constructor-arg ref="dataSource"/>
++        <constructor-arg ref="jdbcTemplate"/>
+     </bean>
+ </beans>
+\ No newline at end of file
+Index: src/test/java/ru/javawebinar/topjava/web/InMemoryAdminRestControllerSpringTest.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/ru/javawebinar/topjava/web/InMemoryAdminRestControllerSpringTest.java	(date 1531862494000)
++++ src/test/java/ru/javawebinar/topjava/web/InMemoryAdminRestControllerSpringTest.java	(date 1531863030005)
+@@ -33,7 +33,7 @@
+     }
+ 
+     @Test
+-    public void testDelete() throws Exception {
++    public void delete() throws Exception {
+         controller.delete(UserTestData.USER_ID);
+         Collection<User> users = controller.getAll();
+         Assert.assertEquals(users.size(), 1);
+@@ -41,7 +41,7 @@
+     }
+ 
+     @Test(expected = NotFoundException.class)
+-    public void testDeleteNotFound() throws Exception {
++    public void deleteNotFound() throws Exception {
+         controller.delete(10);
+     }
+ }
+Index: src/test/java/ru/javawebinar/topjava/service/UserServiceTest.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/ru/javawebinar/topjava/service/UserServiceTest.java	(date 1531862494000)
++++ src/test/java/ru/javawebinar/topjava/service/UserServiceTest.java	(date 1531862512310)
+@@ -56,7 +56,7 @@
+     }
+ 
+     @Test(expected = NotFoundException.class)
+-    public void notFoundDelete() throws Exception {
++    public void deletedNotFound() throws Exception {
+         service.delete(1);
+     }
+ 
+Index: src/main/java/ru/javawebinar/topjava/repository/jdbc/JdbcUserRepositoryImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/repository/jdbc/JdbcUserRepositoryImpl.java	(date 1531862494000)
++++ src/main/java/ru/javawebinar/topjava/repository/jdbc/JdbcUserRepositoryImpl.java	(date 1531863029998)
+@@ -11,7 +11,6 @@
+ import ru.javawebinar.topjava.model.User;
+ import ru.javawebinar.topjava.repository.UserRepository;
+ 
+-import javax.sql.DataSource;
+ import java.util.List;
+ 
+ @Repository
+@@ -26,8 +25,8 @@
+     private final SimpleJdbcInsert insertUser;
+ 
+     @Autowired
+-    public JdbcUserRepositoryImpl(DataSource dataSource, JdbcTemplate jdbcTemplate, NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+-        this.insertUser = new SimpleJdbcInsert(dataSource)
++    public JdbcUserRepositoryImpl(JdbcTemplate jdbcTemplate, NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
++        this.insertUser = new SimpleJdbcInsert(jdbcTemplate)
+                 .withTableName("users")
+                 .usingGeneratedKeyColumns("id");
+ 
+Index: src/main/java/ru/javawebinar/topjava/service/MealService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/service/MealService.java	(date 1531862494000)
++++ src/main/java/ru/javawebinar/topjava/service/MealService.java	(date 1531863064561)
+@@ -21,7 +21,7 @@
+ 
+     List<Meal> getAll(int userId);
+ 
+-    Meal update(Meal meal, int userId) throws NotFoundException;
++    void update(Meal meal, int userId) throws NotFoundException;
+ 
+     Meal create(Meal meal, int userId);
+ }
+\ No newline at end of file

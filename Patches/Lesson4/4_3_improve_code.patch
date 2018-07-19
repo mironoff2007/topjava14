@@ -1,0 +1,260 @@
+Index: .travis.yml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- .travis.yml	(date 1531862550398)
++++ .travis.yml	(date 1531862550398)
+@@ -0,0 +1,22 @@
++# https://docs.travis-ci.com/user/languages/java/
++language: java
++jdk: oraclejdk8
++
++#https://dzone.com/articles/travis-ci-tutorial-java-projects
++cache:
++  directories:
++  - $HOME/.m2
++
++# https://docs.travis-ci.com/user/database-setup/#PostgreSQL
++before_script:
++- psql -c 'create database topjava' -U postgres
++- psql -c 'create user "user"; grant all privileges on database topjava to "user"' -U postgres
++
++# https://docs.travis-ci.com/user/customizing-the-build#Building-Specific-Branches
++branches:
++  only:
++  - master
++
++# https://docs.travis-ci.com/user/notifications#Configuring-email-notifications
++#notifications:
++#  email: false
+\ No newline at end of file
+Index: src/main/java/ru/javawebinar/topjava/util/Util.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/util/Util.java	(date 1531862550377)
++++ src/main/java/ru/javawebinar/topjava/util/Util.java	(date 1531862550377)
+@@ -0,0 +1,15 @@
++package ru.javawebinar.topjava.util;
++
++public class Util {
++
++    private Util() {
++    }
++
++    public static <T extends Comparable<? super T>> boolean isBetween(T value, T start, T end) {
++        return value.compareTo(start) >= 0 && value.compareTo(end) <= 0;
++    }
++
++    public static <T> T orElse(T value, T defaultValue) {
++        return value == null ? defaultValue : value;
++    }
++}
+Index: src/main/java/ru/javawebinar/topjava/service/UserServiceImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/service/UserServiceImpl.java	(date 1531862544000)
++++ src/main/java/ru/javawebinar/topjava/service/UserServiceImpl.java	(date 1531862550360)
+@@ -2,6 +2,7 @@
+ 
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.stereotype.Service;
++import org.springframework.util.Assert;
+ import ru.javawebinar.topjava.model.User;
+ import ru.javawebinar.topjava.repository.UserRepository;
+ import ru.javawebinar.topjava.util.exception.NotFoundException;
+@@ -23,6 +24,7 @@
+ 
+     @Override
+     public User create(User user) {
++        Assert.notNull(user, "user must not be null");
+         return repository.save(user);
+     }
+ 
+@@ -38,6 +40,7 @@
+ 
+     @Override
+     public User getByEmail(String email) throws NotFoundException {
++        Assert.notNull(email, "email must not be null");
+         return checkNotFound(repository.getByEmail(email), "email=" + email);
+     }
+ 
+@@ -48,6 +51,7 @@
+ 
+     @Override
+     public void update(User user) {
++        Assert.notNull(user, "user must not be null");
+         checkNotFoundWithId(repository.save(user), user.getId());
+     }
+ }
+\ No newline at end of file
+Index: src/main/java/ru/javawebinar/topjava/service/MealServiceImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/service/MealServiceImpl.java	(date 1531862544000)
++++ src/main/java/ru/javawebinar/topjava/service/MealServiceImpl.java	(date 1531862550354)
+@@ -2,6 +2,7 @@
+ 
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.stereotype.Service;
++import org.springframework.util.Assert;
+ import ru.javawebinar.topjava.model.Meal;
+ import ru.javawebinar.topjava.repository.MealRepository;
+ 
+@@ -32,6 +33,8 @@
+ 
+     @Override
+     public List<Meal> getBetweenDateTimes(LocalDateTime startDateTime, LocalDateTime endDateTime, int userId) {
++        Assert.notNull(startDateTime, "startDateTime must not be null");
++        Assert.notNull(endDateTime, "endDateTime  must not be null");
+         return repository.getBetween(startDateTime, endDateTime, userId);
+     }
+ 
+@@ -47,6 +50,7 @@
+ 
+     @Override
+     public Meal create(Meal meal, int userId) {
++        Assert.notNull(meal, "meal must not be null");
+         return repository.save(meal, userId);
+     }
+ }
+\ No newline at end of file
+Index: src/main/java/ru/javawebinar/topjava/web/meal/MealRestController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/web/meal/MealRestController.java	(date 1531862544000)
++++ src/main/java/ru/javawebinar/topjava/web/meal/MealRestController.java	(date 1531862550386)
+@@ -15,6 +15,7 @@
+ import java.time.LocalTime;
+ import java.util.List;
+ 
++import static ru.javawebinar.topjava.util.Util.orElse;
+ import static ru.javawebinar.topjava.util.ValidationUtil.assureIdConsistent;
+ import static ru.javawebinar.topjava.util.ValidationUtil.checkNew;
+ 
+@@ -72,12 +73,10 @@
+         log.info("getBetween dates({} - {}) time({} - {}) for user {}", startDate, endDate, startTime, endTime, userId);
+ 
+         List<Meal> mealsDateFiltered = service.getBetweenDates(
+-                startDate != null ? startDate : DateTimeUtil.MIN_DATE,
+-                endDate != null ? endDate : DateTimeUtil.MAX_DATE, userId);
++                orElse(startDate, DateTimeUtil.MIN_DATE), orElse(endDate, DateTimeUtil.MAX_DATE), userId);
+ 
+         return MealsUtil.getFilteredWithExceeded(mealsDateFiltered, SecurityUtil.authUserCaloriesPerDay(),
+-                startTime != null ? startTime : LocalTime.MIN,
+-                endTime != null ? endTime : LocalTime.MAX
++                orElse(startTime, LocalTime.MIN), orElse(endTime, LocalTime.MAX)
+         );
+     }
+ }
+\ No newline at end of file
+Index: src/test/java/ru/javawebinar/topjava/repository/mock/InMemoryMealRepositoryImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/ru/javawebinar/topjava/repository/mock/InMemoryMealRepositoryImpl.java	(date 1531862544000)
++++ src/test/java/ru/javawebinar/topjava/repository/mock/InMemoryMealRepositoryImpl.java	(date 1531862550393)
+@@ -6,15 +6,12 @@
+ import org.springframework.util.CollectionUtils;
+ import ru.javawebinar.topjava.model.Meal;
+ import ru.javawebinar.topjava.repository.MealRepository;
+-import ru.javawebinar.topjava.util.DateTimeUtil;
++import ru.javawebinar.topjava.util.Util;
+ 
+ import javax.annotation.PostConstruct;
+ import javax.annotation.PreDestroy;
+ import java.time.LocalDateTime;
+-import java.util.Collections;
+-import java.util.Comparator;
+-import java.util.List;
+-import java.util.Map;
++import java.util.*;
+ import java.util.concurrent.ConcurrentHashMap;
+ import java.util.concurrent.atomic.AtomicInteger;
+ import java.util.function.Predicate;
+@@ -30,6 +27,7 @@
+ 
+     @Override
+     public Meal save(Meal meal, int userId) {
++        Objects.requireNonNull(meal);
+         Map<Integer, Meal> meals = repository.computeIfAbsent(userId, ConcurrentHashMap::new);
+         if (meal.isNew()) {
+             meal.setId(counter.incrementAndGet());
+@@ -68,7 +66,9 @@
+ 
+     @Override
+     public List<Meal> getBetween(LocalDateTime startDateTime, LocalDateTime endDateTime, int userId) {
+-        return getAllFiltered(userId, meal -> DateTimeUtil.isBetween(meal.getDateTime(), startDateTime, endDateTime));
++        Objects.requireNonNull(startDateTime);
++        Objects.requireNonNull(endDateTime);
++        return getAllFiltered(userId, meal -> Util.isBetween(meal.getDateTime(), startDateTime, endDateTime));
+     }
+ 
+     private List<Meal> getAllFiltered(int userId, Predicate<Meal> filter) {
+Index: src/main/java/ru/javawebinar/topjava/util/ValidationUtil.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/util/ValidationUtil.java	(date 1531862544000)
++++ src/main/java/ru/javawebinar/topjava/util/ValidationUtil.java	(date 1531862550381)
+@@ -10,6 +10,9 @@
+         return checkNotFound(object, "id=" + id);
+     }
+ 
++    private ValidationUtil() {
++    }
++
+     public static void checkNotFoundWithId(boolean found, int id) {
+         checkNotFound(found, "id=" + id);
+     }
+Index: src/main/java/ru/javawebinar/topjava/util/DateTimeUtil.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/util/DateTimeUtil.java	(date 1531862544000)
++++ src/main/java/ru/javawebinar/topjava/util/DateTimeUtil.java	(date 1531862550365)
+@@ -14,8 +14,7 @@
+     public static final LocalDate MIN_DATE = LocalDate.of(1, 1, 1);
+     public static final LocalDate MAX_DATE = LocalDate.of(3000, 1, 1);
+ 
+-    public static <T extends Comparable<? super T>> boolean isBetween(T value, T start, T end) {
+-        return value.compareTo(start) >= 0 && value.compareTo(end) <= 0;
++    private DateTimeUtil() {
+     }
+ 
+     public static String toString(LocalDateTime ldt) {
+Index: src/main/java/ru/javawebinar/topjava/util/MealsUtil.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/util/MealsUtil.java	(date 1531862544000)
++++ src/main/java/ru/javawebinar/topjava/util/MealsUtil.java	(date 1531862550372)
+@@ -17,12 +17,15 @@
+ 
+     public static final int DEFAULT_CALORIES_PER_DAY = 2000;
+ 
++    private MealsUtil() {
++    }
++
+     public static List<MealWithExceed> getWithExceeded(Collection<Meal> meals, int caloriesPerDay) {
+         return getFilteredWithExceeded(meals, caloriesPerDay, meal -> true);
+     }
+ 
+     public static List<MealWithExceed> getFilteredWithExceeded(Collection<Meal> meals, int caloriesPerDay, LocalTime startTime, LocalTime endTime) {
+-        return getFilteredWithExceeded(meals, caloriesPerDay, meal -> DateTimeUtil.isBetween(meal.getTime(), startTime, endTime));
++        return getFilteredWithExceeded(meals, caloriesPerDay, meal -> Util.isBetween(meal.getTime(), startTime, endTime));
+     }
+ 
+     private static List<MealWithExceed> getFilteredWithExceeded(Collection<Meal> meals, int caloriesPerDay, Predicate<Meal> filter) {
