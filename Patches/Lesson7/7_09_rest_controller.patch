@@ -1,0 +1,123 @@
+Index: src/main/java/ru/javawebinar/topjava/web/user/ProfileRestController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/web/user/ProfileRestController.java	(date 1523821830000)
++++ src/main/java/ru/javawebinar/topjava/web/user/ProfileRestController.java	(date 1523822135933)
+@@ -1,21 +1,29 @@
+ package ru.javawebinar.topjava.web.user;
+ 
+-import org.springframework.stereotype.Controller;
++import org.springframework.http.HttpStatus;
++import org.springframework.http.MediaType;
++import org.springframework.web.bind.annotation.*;
+ import ru.javawebinar.topjava.AuthorizedUser;
+ import ru.javawebinar.topjava.model.User;
+ 
+-@Controller
++@RestController
++@RequestMapping(ProfileRestController.REST_URL)
+ public class ProfileRestController extends AbstractUserController {
++    static final String REST_URL = "/rest/profile";
+ 
++    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+     public User get() {
+         return super.get(AuthorizedUser.id());
+     }
+ 
++    @DeleteMapping
++    @ResponseStatus(value = HttpStatus.NO_CONTENT)
+     public void delete() {
+         super.delete(AuthorizedUser.id());
+     }
+ 
+-    public void update(User user) {
++    @PutMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
++    public void update(@RequestBody User user) {
+         super.update(user, AuthorizedUser.id());
+     }
+ }
+\ No newline at end of file
+Index: src/main/java/ru/javawebinar/topjava/web/user/AdminRestController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/web/user/AdminRestController.java	(date 1523821830000)
++++ src/main/java/ru/javawebinar/topjava/web/user/AdminRestController.java	(date 1523822135921)
+@@ -1,40 +1,62 @@
+ package ru.javawebinar.topjava.web.user;
+ 
+-import org.springframework.stereotype.Controller;
++import org.springframework.http.HttpStatus;
++import org.springframework.http.MediaType;
++import org.springframework.http.ResponseEntity;
++import org.springframework.web.bind.annotation.*;
++import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+ import ru.javawebinar.topjava.model.User;
+ 
++import java.net.URI;
+ import java.util.List;
+ 
+-@Controller
++@RestController
++@RequestMapping(AdminRestController.REST_URL)
+ public class AdminRestController extends AbstractUserController {
++    static final String REST_URL = "/rest/admin/users";
+ 
+     @Override
++    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+     public List<User> getAll() {
+         return super.getAll();
+     }
+ 
+     @Override
+-    public User get(int id) {
++    @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
++    public User get(@PathVariable("id") int id) {
+         return super.get(id);
+     }
+ 
++    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
++    public ResponseEntity<User> createWithLocation(@RequestBody User user) {
++        User created = super.create(user);
++
++//        HttpHeaders httpHeaders = new HttpHeaders();
++//        httpHeaders.setLocation(uriOfNewResource);
++
++        URI uriOfNewResource = ServletUriComponentsBuilder.fromCurrentContextPath()
++                .path(REST_URL + "/{id}")
++                .buildAndExpand(created.getId()).toUri();
++
++        return ResponseEntity.created(uriOfNewResource).body(created);
++    }
++
+     @Override
+-    public User create(User user) {
+-        return super.create(user);
+-    }
+-
+-    @Override
+-    public void delete(int id) {
++    @DeleteMapping(value = "/{id}")
++    @ResponseStatus(value = HttpStatus.NO_CONTENT)
++    public void delete(@PathVariable("id") int id) {
+         super.delete(id);
+     }
+ 
+     @Override
+-    public void update(User user, int id) {
++    @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
++    public void update(@RequestBody User user, @PathVariable("id") int id) {
+         super.update(user, id);
+     }
+ 
+     @Override
+-    public User getByMail(String email) {
++    @GetMapping(value = "/by", produces = MediaType.APPLICATION_JSON_VALUE)
++    public User getByMail(@RequestParam("email") String email) {
+         return super.getByMail(email);
+     }
+ }
+\ No newline at end of file
