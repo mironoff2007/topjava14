@@ -1,0 +1,88 @@
+Index: src/main/webapp/resources/js/datatablesUtil.js
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/webapp/resources/js/datatablesUtil.js	(date 1524709956000)
++++ src/main/webapp/resources/js/datatablesUtil.js	(date 1524710635889)
+@@ -2,6 +2,13 @@
+     $(".delete").click(function () {
+         deleteRow($(this).attr("id"));
+     });
++
++    $(document).ajaxError(function (event, jqXHR, options, jsExc) {
++        failNoty(jqXHR);
++    });
++
++    // solve problem with cache in IE: https://stackoverflow.com/a/4303862/548473
++    $.ajaxSetup({cache: false});
+ }
+ 
+ function add() {
+@@ -15,6 +22,7 @@
+         type: "DELETE",
+         success: function () {
+             updateTable();
++            successNoty("Deleted");
+         }
+     });
+ }
+@@ -34,6 +42,35 @@
+         success: function () {
+             $("#editRow").modal("hide");
+             updateTable();
++            successNoty("Saved");
+         }
+     });
++}
++
++var failedNote;
++
++function closeNoty() {
++    if (failedNote) {
++        failedNote.close();
++        failedNote = undefined;
++    }
++}
++
++function successNoty(text) {
++    closeNoty();
++    new Noty({
++        text: "<span class='fa fa-lg fa-check'></span> &nbsp;" + text,
++        type: 'success',
++        layout: "bottomRight",
++        timeout: 1000
++    }).show();
++}
++
++function failNoty(jqXHR) {
++    closeNoty();
++    failedNote = new Noty({
++        text: "<span class='fa fa-lg fa-exclamation-circle'></span> &nbsp;Error status: " + jqXHR.status,
++        type: "error",
++        layout: "bottomRight"
++    }).show();
+ }
+\ No newline at end of file
+Index: src/main/webapp/WEB-INF/jsp/fragments/headTag.jsp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/webapp/WEB-INF/jsp/fragments/headTag.jsp	(date 1524709956000)
++++ src/main/webapp/WEB-INF/jsp/fragments/headTag.jsp	(date 1524710278556)
+@@ -11,6 +11,7 @@
+     <link rel="stylesheet" href="webjars/bootstrap/4.1.0/css/bootstrap.min.css">
+     <link rel="stylesheet" href="webjars/noty/3.1.0/demo/font-awesome/css/font-awesome.min.css">
+     <link rel="stylesheet" href="webjars/datatables/1.10.16/css/dataTables.bootstrap4.min.css">
++    <link rel="stylesheet" href="webjars/noty/3.1.0/lib/noty.css"/>
+     <link rel="shortcut icon" href="resources/images/icon-meal.png">
+ 
+     <!--http://stackoverflow.com/a/24070373/548473-->
+@@ -18,4 +19,5 @@
+     <script type="text/javascript" src="webjars/bootstrap/4.1.0/js/bootstrap.min.js" defer></script>
+     <script type="text/javascript" src="webjars/datatables/1.10.16/js/jquery.dataTables.min.js" defer></script>
+     <script type="text/javascript" src="webjars/datatables/1.10.16/js/dataTables.bootstrap4.min.js" defer></script>
++    <script type="text/javascript" src="webjars/noty/3.1.0/lib/noty.min.js" defer></script>
+ </head>
+\ No newline at end of file

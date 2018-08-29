@@ -1,0 +1,35 @@
+Index: src/main/webapp/WEB-INF/jsp/users.jsp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/webapp/WEB-INF/jsp/users.jsp	(date 1524727800000)
++++ src/main/webapp/WEB-INF/jsp/users.jsp	(date 1524727944500)
+@@ -80,9 +80,11 @@
+             <div class="modal-footer">
+                 <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                     <span class="fa fa-close" aria-hidden="true"></span>
++                    <spring:message code="common.cancel"/>
+                 </button>
+                 <button type="button" class="btn btn-primary" onclick="save()">
+                     <span class="fa fa-check" aria-hidden="true"></span>
++                    <spring:message code="common.save"/>
+                 </button>
+             </div>
+         </div>
+Index: src/main/java/ru/javawebinar/topjava/web/json/JacksonObjectMapper.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/web/json/JacksonObjectMapper.java	(date 1524727800000)
++++ src/main/java/ru/javawebinar/topjava/web/json/JacksonObjectMapper.java	(date 1524727970352)
+@@ -14,7 +14,7 @@
+  *
+  * @link https://github.com/FasterXML/jackson
+  * @link https://github.com/FasterXML/jackson-datatype-hibernate
+- * @link http://wiki.fasterxml.com/JacksonHowToCustomSerializers
++ * @link https://github.com/FasterXML/jackson-docs/wiki/JacksonHowToCustomSerializers
+  */
+ public class JacksonObjectMapper extends ObjectMapper {
+ 

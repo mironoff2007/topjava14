@@ -1,0 +1,119 @@
+Index: src/test/java/ru/javawebinar/topjava/web/RootControllerTest.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/ru/javawebinar/topjava/web/RootControllerTest.java	(revision e4de9e3cb4d8737171b15e64be90b863d551e09f)
++++ src/test/java/ru/javawebinar/topjava/web/RootControllerTest.java	(date 1524682161310)
+@@ -1,6 +1,9 @@
+ package ru.javawebinar.topjava.web;
+ 
+ import org.junit.Test;
++import ru.javawebinar.topjava.AuthorizedUser;
++import ru.javawebinar.topjava.MealTestData;
++import ru.javawebinar.topjava.util.MealsUtil;
+ 
+ import static org.hamcrest.Matchers.*;
+ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+@@ -26,4 +29,15 @@
+                         )
+                 )));
+     }
++
++    @Test
++    public void testMeals() throws Exception {
++        mockMvc.perform(get("/meals"))
++                .andDo(print())
++                .andExpect(status().isOk())
++                .andExpect(view().name("meals"))
++                .andExpect(forwardedUrl("/WEB-INF/jsp/meals.jsp"))
++                .andExpect(model().attribute("meals", MealsUtil.getWithExceeded(MealTestData.MEALS, AuthorizedUser.getCaloriesPerDay())));
++    }
++
+ }
+\ No newline at end of file
+Index: src/test/java/ru/javawebinar/topjava/web/ResourceControllerTest.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/ru/javawebinar/topjava/web/ResourceControllerTest.java	(date 1524682161302)
++++ src/test/java/ru/javawebinar/topjava/web/ResourceControllerTest.java	(date 1524682161302)
+@@ -0,0 +1,20 @@
++package ru.javawebinar.topjava.web;
++
++import org.junit.Test;
++import org.springframework.http.MediaType;
++
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
++import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
++
++public class ResourceControllerTest extends AbstractControllerTest {
++
++    @Test
++    public void testResources() throws Exception {
++        mockMvc.perform(get("/resources/css/style.css"))
++                .andDo(print())
++                .andExpect(content().contentType(MediaType.valueOf("text/css")))
++                .andExpect(status().isOk());
++    }
++}
+\ No newline at end of file
+Index: src/main/resources/logback.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/resources/logback.xml	(revision e4de9e3cb4d8737171b15e64be90b863d551e09f)
++++ src/main/resources/logback.xml	(date 1524682161290)
+@@ -21,7 +21,8 @@
+     </appender>
+ 
+     <logger name="ru.javawebinar.topjava" level="debug"/>
+-    <logger name="org.springframework.web.servlet" level="debug"/>
++    <!--<logger name="org.springframework.web.servlet" level="debug"/>-->
++    <logger name="org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver" level="debug"/>
+ 
+     <root level="info">
+         <appender-ref ref="file"/>
+Index: src/main/java/ru/javawebinar/topjava/to/MealWithExceed.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/to/MealWithExceed.java	(revision e4de9e3cb4d8737171b15e64be90b863d551e09f)
++++ src/main/java/ru/javawebinar/topjava/to/MealWithExceed.java	(date 1524682161278)
+@@ -1,6 +1,7 @@
+ package ru.javawebinar.topjava.to;
+ 
+ import java.time.LocalDateTime;
++import java.util.Objects;
+ 
+ public class MealWithExceed {
+     private final Integer id;
+@@ -41,6 +42,23 @@
+         return exceed;
+     }
+ 
++    @Override
++    public boolean equals(Object o) {
++        if (this == o) return true;
++        if (o == null || getClass() != o.getClass()) return false;
++        MealWithExceed that = (MealWithExceed) o;
++        return calories == that.calories &&
++                exceed == that.exceed &&
++                Objects.equals(id, that.id) &&
++                Objects.equals(dateTime, that.dateTime) &&
++                Objects.equals(description, that.description);
++    }
++
++    @Override
++    public int hashCode() {
++        return Objects.hash(id, dateTime, description, calories, exceed);
++    }
++
+     @Override
+     public String toString() {
+         return "MealWithExceed{" +

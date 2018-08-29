@@ -1,0 +1,272 @@
+Index: src/test/java/ru/javawebinar/topjava/web/meal/MealRestControllerTest.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/ru/javawebinar/topjava/web/meal/MealRestControllerTest.java	(date 1524692625097)
++++ src/test/java/ru/javawebinar/topjava/web/meal/MealRestControllerTest.java	(date 1524692625097)
+@@ -0,0 +1,88 @@
++package ru.javawebinar.topjava.web.meal;
++
++import org.junit.Test;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.http.MediaType;
++import org.springframework.test.web.servlet.ResultActions;
++import ru.javawebinar.topjava.model.Meal;
++import ru.javawebinar.topjava.service.MealService;
++import ru.javawebinar.topjava.util.MealsUtil;
++import ru.javawebinar.topjava.web.AbstractControllerTest;
++import ru.javawebinar.topjava.web.json.JsonUtil;
++
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
++import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
++import static ru.javawebinar.topjava.MealTestData.*;
++import static ru.javawebinar.topjava.TestUtil.*;
++import static ru.javawebinar.topjava.UserTestData.USER;
++import static ru.javawebinar.topjava.model.AbstractBaseEntity.START_SEQ;
++
++public class MealRestControllerTest extends AbstractControllerTest {
++
++    private static final String REST_URL = MealRestController.REST_URL + '/';
++
++    @Autowired
++    private MealService service;
++
++    @Test
++    public void testGet() throws Exception {
++        mockMvc.perform(get(REST_URL + MEAL1_ID))
++                .andExpect(status().isOk())
++                .andDo(print())
++                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
++                .andExpect(contentJson(MEAL1));
++    }
++
++    @Test
++    public void testDelete() throws Exception {
++        mockMvc.perform(delete(REST_URL + MEAL1_ID))
++                .andExpect(status().isNoContent());
++        assertMatch(service.getAll(START_SEQ), MEAL6, MEAL5, MEAL4, MEAL3, MEAL2);
++    }
++
++    @Test
++    public void testUpdate() throws Exception {
++        Meal updated = getUpdated();
++
++        mockMvc.perform(put(REST_URL + MEAL1_ID).contentType(MediaType.APPLICATION_JSON)
++                .content(JsonUtil.writeValue(updated)))
++                .andExpect(status().isOk());
++
++        assertMatch(service.get(MEAL1_ID, START_SEQ), updated);
++    }
++
++    @Test
++    public void testCreate() throws Exception {
++        Meal created = getCreated();
++        ResultActions action = mockMvc.perform(post(REST_URL)
++                .contentType(MediaType.APPLICATION_JSON)
++                .content(JsonUtil.writeValue(created)));
++
++        Meal returned = readFromJson(action, Meal.class);
++        created.setId(returned.getId());
++
++        assertMatch(returned, created);
++        assertMatch(service.getAll(START_SEQ), created, MEAL6, MEAL5, MEAL4, MEAL3, MEAL2, MEAL1);
++    }
++
++    @Test
++    public void testGetAll() throws Exception {
++        mockMvc.perform(get(REST_URL))
++                .andExpect(status().isOk())
++                .andDo(print())
++                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
++                .andExpect(contentJson(MealsUtil.getWithExceeded(MEALS, USER.getCaloriesPerDay())));
++    }
++
++    @Test
++    public void testGetBetween() throws Exception {
++        mockMvc.perform(get(REST_URL + "between?startDateTime=2015-05-30T07:00&endDateTime=2015-05-31T11:00:00"))
++                .andExpect(status().isOk())
++                .andDo(print())
++                .andExpect(contentJsonArray(
++                        MealsUtil.createWithExceed(MEAL4, true),
++                        MealsUtil.createWithExceed(MEAL1, false)));
++    }
++}
+\ No newline at end of file
+Index: src/test/java/ru/javawebinar/topjava/TestUtil.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/ru/javawebinar/topjava/TestUtil.java	(date 1524682443000)
++++ src/test/java/ru/javawebinar/topjava/TestUtil.java	(date 1524686167930)
+@@ -1,10 +1,14 @@
+ package ru.javawebinar.topjava;
+ 
+ import org.springframework.test.web.servlet.ResultActions;
++import org.springframework.test.web.servlet.ResultMatcher;
+ import ru.javawebinar.topjava.web.json.JsonUtil;
+ 
+ import java.io.UnsupportedEncodingException;
+ 
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
++import static ru.javawebinar.topjava.web.json.JsonUtil.writeValue;
++
+ public class TestUtil {
+ 
+     public static String getContent(ResultActions action) throws UnsupportedEncodingException {
+@@ -19,4 +23,12 @@
+     public static <T> T readFromJson(ResultActions action, Class<T> clazz) throws UnsupportedEncodingException {
+         return JsonUtil.readValue(getContent(action), clazz);
+     }
++
++    public static <T> ResultMatcher contentJson(T expected) {
++        return content().json(writeValue(expected));
++    }
++
++    public static <T> ResultMatcher contentJsonArray(T... expected) {
++        return contentJson(expected);
++    }
+ }
+Index: src/test/java/ru/javawebinar/topjava/web/user/ProfileRestControllerTest.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/ru/javawebinar/topjava/web/user/ProfileRestControllerTest.java	(date 1524682443000)
++++ src/test/java/ru/javawebinar/topjava/web/user/ProfileRestControllerTest.java	(date 1524686167938)
+@@ -30,7 +30,7 @@
+     @Test
+     public void testDelete() throws Exception {
+         mockMvc.perform(delete(REST_URL))
+-                .andExpect(status().isOk());
++                .andExpect(status().isNoContent());
+         assertMatch(userService.getAll(), ADMIN);
+     }
+ 
+Index: src/main/java/ru/javawebinar/topjava/web/meal/MealRestController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/web/meal/MealRestController.java	(date 1524682443000)
++++ src/main/java/ru/javawebinar/topjava/web/meal/MealRestController.java	(date 1524692554854)
+@@ -1,7 +1,63 @@
+ package ru.javawebinar.topjava.web.meal;
+ 
+-import org.springframework.stereotype.Controller;
++import org.springframework.format.annotation.DateTimeFormat;
++import org.springframework.http.HttpStatus;
++import org.springframework.http.MediaType;
++import org.springframework.http.ResponseEntity;
++import org.springframework.web.bind.annotation.*;
++import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
++import ru.javawebinar.topjava.model.Meal;
++import ru.javawebinar.topjava.to.MealWithExceed;
+ 
+-@Controller
++import java.net.URI;
++import java.time.LocalDateTime;
++import java.util.List;
++
++@RestController
++@RequestMapping(value = MealRestController.REST_URL, produces = MediaType.APPLICATION_JSON_VALUE)
+ public class MealRestController extends AbstractMealController {
++    static final String REST_URL = "/rest/profile/meals";
++
++    @Override
++    @GetMapping("/{id}")
++    public Meal get(@PathVariable("id") int id) {
++        return super.get(id);
++    }
++
++    @Override
++    @DeleteMapping("/{id}")
++    @ResponseStatus(value = HttpStatus.NO_CONTENT)
++    public void delete(@PathVariable("id") int id) {
++        super.delete(id);
++    }
++
++    @Override
++    @GetMapping
++    public List<MealWithExceed> getAll() {
++        return super.getAll();
++    }
++
++    @Override
++    @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
++    public void update(@RequestBody Meal meal, @PathVariable("id") int id) {
++        super.update(meal, id);
++    }
++
++    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
++    public ResponseEntity<Meal> createWithLocation(@RequestBody Meal meal) {
++        Meal created = super.create(meal);
++
++        URI uriOfNewResource = ServletUriComponentsBuilder.fromCurrentContextPath()
++                .path(REST_URL + "/{id}")
++                .buildAndExpand(created.getId()).toUri();
++
++        return ResponseEntity.created(uriOfNewResource).body(created);
++    }
++
++    @GetMapping(value = "/between")
++    public List<MealWithExceed> getBetween(
++            @RequestParam(value = "startDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDateTime,
++            @RequestParam(value = "endDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDateTime) {
++        return super.getBetween(startDateTime.toLocalDate(), startDateTime.toLocalTime(), endDateTime.toLocalDate(), endDateTime.toLocalTime());
++    }
+ }
+\ No newline at end of file
+Index: src/test/java/ru/javawebinar/topjava/web/user/AdminRestControllerTest.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/ru/javawebinar/topjava/web/user/AdminRestControllerTest.java	(date 1524682443000)
++++ src/test/java/ru/javawebinar/topjava/web/user/AdminRestControllerTest.java	(date 1524692571062)
+@@ -15,6 +15,7 @@
+ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
++import static ru.javawebinar.topjava.TestUtil.readFromJson;
+ import static ru.javawebinar.topjava.UserTestData.*;
+ 
+ public class AdminRestControllerTest extends AbstractControllerTest {
+@@ -43,7 +44,7 @@
+     public void testDelete() throws Exception {
+         mockMvc.perform(delete(REST_URL + USER_ID))
+                 .andDo(print())
+-                .andExpect(status().isOk());
++                .andExpect(status().isNoContent());
+         assertMatch(userService.getAll(), ADMIN);
+     }
+ 
+@@ -68,7 +69,7 @@
+                 .content(JsonUtil.writeValue(expected)))
+                 .andExpect(status().isCreated());
+ 
+-        User returned = TestUtil.readFromJson(action, User.class);
++        User returned = readFromJson(action, User.class);
+         expected.setId(returned.getId());
+ 
+         assertMatch(returned, expected);
+Index: src/main/java/ru/javawebinar/topjava/util/MealsUtil.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/ru/javawebinar/topjava/util/MealsUtil.java	(date 1524682443000)
++++ src/main/java/ru/javawebinar/topjava/util/MealsUtil.java	(date 1524686167920)
+@@ -41,7 +41,7 @@
+                 .collect(toList());
+     }
+ 
+-    private static MealWithExceed createWithExceed(Meal meal, boolean exceeded) {
++    public static MealWithExceed createWithExceed(Meal meal, boolean exceeded) {
+         return new MealWithExceed(meal.getId(), meal.getDateTime(), meal.getDescription(), meal.getCalories(), exceeded);
+     }
+ }
+\ No newline at end of file

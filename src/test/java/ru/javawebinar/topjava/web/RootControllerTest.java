@@ -1,6 +1,8 @@
 package ru.javawebinar.topjava.web;
 
 import org.junit.jupiter.api.Test;
+import ru.javawebinar.topjava.MealTestData;
+import ru.javawebinar.topjava.util.MealsUtil;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
