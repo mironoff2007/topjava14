@@ -6,19 +6,15 @@
 <jsp:include page="fragments/headTag.jsp"/>
 <body>
 <jsp:include page="fragments/bodyHeader.jsp"/>
-<section>
-    <form method="post" action="users">
-        <spring:message code="app.login"/>: <select name="userId">
-        <option value="100000" selected>User</option>
-        <option value="100001">Admin</option>
-    </select>
-        <button type="submit"><spring:message code="common.select"/></button>
-    </form>
-    <ul>
-        <li><a href="users"><spring:message code="user.title"/></a></li>
-        <li><a href="meals"><spring:message code="meal.title"/></a></li>
-    </ul>
-</section>
-<jsp:include page="fragments/footer.jsp"/>
-</body>
-</html>
+<header><a href="${pageContext.request.contextPath}/"><spring:message code="app.home"/></a>&nbsp;|&nbsp;<a href="meals"><spring:message code="app.title"/></a></header>
+<nav class="navbar navbar-dark bg-dark">
+    <div class="container">
+        <a href="meals" class="navbar-brand"><img src="resources/images/icon-meal.png"> <spring:message code="app.title"/></a>
+        <form class="form-inline my-2">
+            <a class="btn btn-info mr-2" href="users"><spring:message code="user.title"/></a>
+            <a class="btn btn-primary" href="">
+                <span class="fa fa-sign-in"></span>
+            </a>
+        </form>
+    </div>
+</nav>
